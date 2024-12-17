@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: Emotion
+  main:
+    web-application-type: servlet
+  datasource:
+    url: jdbc:mysql://localhost:3306/emotionDB?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+
+  mvc:
+    static-path-pattern: "/**" # Asegura que todos los archivos estáticos sean accesibles.
+
+server:
+  port: 8081
+
+logging:
+  level:
+    root: DEBUG
+    com.zaxxer.hikari: INFO
+    org.springdoc: DEBUG
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html

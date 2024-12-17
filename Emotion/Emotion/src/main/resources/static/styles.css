@@ -1,0 +1,47 @@
+/* Estilo general del cuerpo */
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    font-family: Arial, sans-serif;
+    color: #fff;
+}
+
+/* Fondo con textura líquida animada */
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('fondo.png'); /* Reemplaza con la ruta de tu imagen */
+    background-size: cover;
+    background-position: center;
+    animation: liquidFlow 10s infinite alternate;
+    filter: blur(10px); /* Agrega un ligero desenfoque */
+    z-index: -1;
+}
+
+/* Animación de flujo de la textura líquida */
+@keyframes liquidFlow {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 100% 100%;
+    }
+}
+
+/* Contenido sobre el fondo */
+.content {
+    text-align: center;
+    z-index: 1;
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente para el texto */
+    padding: 20px;
+    border-radius: 10px;
+}
