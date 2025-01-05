@@ -18,10 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -65,33 +62,50 @@ public class IAlbumServiceImpl implements IAlbumService {
 
     @Override
     public AlbumResponse updateAlbum(Integer id, AlbumRequest albumRequest) {
-        log.info("Attempting to update album with ID: {}", id); // Indicando que se está intentando actualizar un género con un ID específico
+        log.info("Attempting to update album with ID: {}", id);
 
         return albumRepository.findById(id)
                 .map(existingAlbum -> {
-                    log.info("Album found with ID: {}. Updating details...", id); // Indicando que el album fue encontrado
+                    log.info("Album found with ID: {}. Updating details...", id);
 
-                    // Actualizar los campos de la entidad Genre con los datos de genreRequest
+                    // Actualizar campos básicos
                     existingAlbum.setTitle(albumRequest.getTitle());
                     existingAlbum.setReleaseDate(albumRequest.getReleaseDate());
                     existingAlbum.setDescription(albumRequest.getDescription());
                     log.debug("Updated album fields with title: {}, release date: {}, description: {}",
-                            albumRequest.getTitle(), albumRequest.getReleaseDate(), albumRequest.getDescription()); // Información detallada sobre los campos actualizados
+         *                   albumRequest.getTitle(), albumRequest.getReleaseDate(), albumRequest.getDescription());
 
-                    // Obtener las canciones usando el repositorio de canciones y asignarlas al género
-                    Set<Genre> genres = new HashSet<>(genreRepository.findAllById(albumRequest.getGenreIds()));
-                    existingAlbum.setGenres(genres);
-                    log.debug("Associated songs with genre: {}", genres); // Información sobre las canciones asociadas
+                    // Actualizar géneros si existen nuevos
+                    if (albumRequest.getGenreIds() != null && !albumRequest.getGenreIds().isEmpty()) {
+                        Set<Genre> newGenres = new HashSet<>(genreRepository.findAllById(albumRequest.getGenreIds()));
+                        existingAlbum.getGenres().addAll(newGenres);
+                        log.debug("Added genres: {}", newGenres);
+                    }
 
-                    // Guardar el género actualizado en la base de datos
+                    // Actualizar canciones si existen nuevas
+                    if (albumRequest.getSongIds() != null && !albumRequest.getSongIds().isEmpty()) {
+                        List<Song> newSongs = songRepository.findAllById(albumRequest.getSongIds());
+
+                        // Agregar nuevas canciones sin eliminar las existentes
+                        newSongs.forEach(song -> {
+                            song.setAlbum(existingAlbum);
+                            if (!existingAlbum.getSongs().contains(song)) {
+                                existingAlbum.getSongs().add(song);
+                            }
+                        });
+
+                        log.debug("Added songs: {}", newSongs);
+                    }
+
+                    // Guardar el álbum actualizado
                     Album updatedAlbum = albumRepository.save(existingAlbum);
-                    log.info("Album with ID: {} updated successfully", id); // Indicando que la actualización fue exitosa
+                    log.info("Album with ID: {} updated successfully", id);
 
                     return updatedAlbum;
                 })
                 .map(albumMapper::toAlbumResponse)
                 .orElseThrow(() -> {
-                    log.error("Album with ID: {} not found", id); // Indicando que no se encontró el album con el ID especificado
+                    log.error("Album with ID: {} not found", id);
                     return new AlbumNotFoundException("Album with ID " + id + " not found");
                 });
     }

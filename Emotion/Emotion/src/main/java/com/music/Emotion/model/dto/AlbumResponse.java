@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Builder
@@ -14,5 +15,6 @@ public class AlbumResponse {
     private LocalDate releaseDate;
     private String description;
     private String status;
-    private GenreResponse genre;
+    private List<Integer> genreIds;
+    private List<Integer> songIds;
 }
