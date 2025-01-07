@@ -10,8 +10,10 @@ import com.music.Emotion.repository.GenreRepository;
 import com.music.Emotion.repository.SongRepository;
 import com.music.Emotion.service.IGenreService;
 import com.music.Emotion.service.relationship.SongGenreService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -59,36 +61,44 @@ public class IGenreServiceImpl implements IGenreService {
     }
 
     @Override
+    @Transactional
     public GenreResponse updateGenre(Integer id, GenreRequest genreRequest) {
-        log.info("Attempting to update genre with ID: {}", id); // Indicando que se está intentando actualizar un género con un ID específico
+        log.info("Attempting to update genre with ID: {}", id);
 
         return genreRepository.findById(id)
                 .map(existingGenre -> {
-                    log.info("Genre found with ID: {}. Updating details...", id); // Indicando que el género fue encontrado
+                    log.info("Genre found with ID: {}. Updating details...", id);
 
-                    // Actualizar los campos de la entidad Genre con los datos de genreRequest
+                    // Actualizar campos básicos
                     existingGenre.setName(genreRequest.getName());
                     existingGenre.setDescription(genreRequest.getDescription());
-                    log.debug("Updated genre fields with new name: {} and description: {}", genreRequest.getName(), genreRequest.getDescription()); // Información detallada sobre los campos actualizados
+                    log.debug("Updated genre fields with name: {} and description: {}", genreRequest.getName(), genreRequest.getDescription());
 
-                    // Obtener las canciones usando el repositorio de canciones y asignarlas al género
-                    Set<Song> songs = new HashSet<>(songRepository.findAllById(genreRequest.getSongIds()));
-                    existingGenre.setSongs(songs);
-                    log.debug("Associated songs with genre: {}", songs); // Información sobre las canciones asociadas
+                    // Validar y asociar canciones
+                    List<Song> songs = songRepository.findAllById(genreRequest.getSongIds());
+                    if (songs.size() != genreRequest.getSongIds().size()) {
+                        log.error("Some song IDs in the request are invalid: {}", genreRequest.getSongIds());
+                        throw new IllegalArgumentException("Some song IDs are invalid or do not exist");
+                    }
 
-                    // Guardar el género actualizado en la base de datos
-                    Genre updatedGenre = genreRepository.save(existingGenre);
-                    log.info("Genre with ID: {} updated successfully", id); // Indicando que la actualización fue exitosa
+                    // Limpiar y actualizar relaciones
+                    existingGenre.getSongs().clear();
+                    existingGenre.getSongs().addAll(new HashSet<>(songs));
+                    log.debug("Updated song associations for genre ID {}: {}", id, songs);
 
-                    return updatedGenre;
+                    // Persistir cambios
+                    return existingGenre;
                 })
-                .map(genreMapper::toGenreResponse)
+                .map(updatedGenre -> {
+                    Hibernate.initialize(updatedGenre.getSongs()); // Inicializar relaciones
+                    log.info("Successfully updated genre with ID: {}", id);
+                    return genreMapper.toGenreResponse(updatedGenre); // Mapear a DTO
+                })
                 .orElseThrow(() -> {
-                    log.error("Genre with ID: {} not found", id); // Indicando que no se encontró el género con el ID especificado
+                    log.error("Genre with ID {} not found", id);
                     return new GenreNotFoundException("Genre with ID " + id + " not found");
                 });
     }
-
     @Override
     public GenreResponse findById(Integer id) {
         log.info("Finding genre with ID: {}", id); // Indicando que se está buscando un género con un ID específico

@@ -73,7 +73,7 @@ public class IAlbumServiceImpl implements IAlbumService {
                     existingAlbum.setReleaseDate(albumRequest.getReleaseDate());
                     existingAlbum.setDescription(albumRequest.getDescription());
                     log.debug("Updated album fields with title: {}, release date: {}, description: {}",
-         *                   albumRequest.getTitle(), albumRequest.getReleaseDate(), albumRequest.getDescription());
+                           albumRequest.getTitle(), albumRequest.getReleaseDate(), albumRequest.getDescription());
 
                     // Actualizar géneros si existen nuevos
                     if (albumRequest.getGenreIds() != null && !albumRequest.getGenreIds().isEmpty()) {
